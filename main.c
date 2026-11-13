@@ -7,10 +7,9 @@
 #include <time.h>
 #include <sys/time.h>
 
-#define DISP_BUF_SIZE (128 * 1024)
+#define DISP_BUF_SIZE (8*600 * 1024)
 
-int main(void)
-{
+int main(void) {
     /*LittlevGL init*/
     lv_init();
 
@@ -27,10 +26,10 @@ int main(void)
     /*Initialize and register a display driver*/
     static lv_disp_drv_t disp_drv;
     lv_disp_drv_init(&disp_drv);
-    disp_drv.draw_buf   = &disp_buf;
-    disp_drv.flush_cb   = fbdev_flush;
-    disp_drv.hor_res    = 800;
-    disp_drv.ver_res    = 480;
+    disp_drv.draw_buf = &disp_buf;
+    disp_drv.flush_cb = fbdev_flush;
+    disp_drv.hor_res = 1024;
+    disp_drv.ver_res = 600;
     lv_disp_drv_register(&disp_drv);
 
     evdev_init();
@@ -45,16 +44,16 @@ int main(void)
 
     /*Set a cursor for the mouse*/
     LV_IMG_DECLARE(mouse_cursor_icon)
-    lv_obj_t * cursor_obj = lv_img_create(lv_scr_act()); /*Create an image object for the cursor */
-    lv_img_set_src(cursor_obj, &mouse_cursor_icon);           /*Set the image source*/
-    lv_indev_set_cursor(mouse_indev, cursor_obj);             /*Connect the image  object to the driver*/
+    lv_obj_t *cursor_obj = lv_img_create(lv_scr_act()); /*Create an image object for the cursor */
+    lv_img_set_src(cursor_obj, &mouse_cursor_icon); /*Set the image source*/
+    lv_indev_set_cursor(mouse_indev, cursor_obj); /*Connect the image  object to the driver*/
 
 
     /*Create a Demo*/
     lv_demo_widgets();
 
     /*Handle LitlevGL tasks (tickless mode)*/
-    while(1) {
+    while (1) {
         lv_timer_handler();
         usleep(5000);
     }
@@ -63,10 +62,9 @@ int main(void)
 }
 
 /*Set in lv_conf.h as `LV_TICK_CUSTOM_SYS_TIME_EXPR`*/
-uint32_t custom_tick_get(void)
-{
+uint32_t custom_tick_get(void) {
     static uint64_t start_ms = 0;
-    if(start_ms == 0) {
+    if (start_ms == 0) {
         struct timeval tv_start;
         gettimeofday(&tv_start, NULL);
         start_ms = (tv_start.tv_sec * 1000000 + tv_start.tv_usec) / 1000;
