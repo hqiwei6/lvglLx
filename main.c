@@ -1,13 +1,14 @@
 #include "lvgl/lvgl.h"
-#include "lvgl/demos/lv_demos.h"
+#include "ui/login.h"
 #include "lv_drivers/display/fbdev.h"
 #include "lv_drivers/indev/evdev.h"
 #include <unistd.h>
-#include <pthread.h>
 #include <time.h>
 #include <sys/time.h>
 
 #define DISP_BUF_SIZE (8*600 * 1024)
+
+uint32_t custom_tick_get(void);
 
 int main(void) {
     /*LittlevGL init*/
@@ -36,11 +37,8 @@ int main(void) {
     static lv_indev_drv_t indev_drv_1;
     lv_indev_drv_init(&indev_drv_1); /*Basic initialization*/
     indev_drv_1.type = LV_INDEV_TYPE_POINTER;
-
-    /*This function will be called periodically (by the library) to get the mouse position and state*/
     indev_drv_1.read_cb = evdev_read;
     lv_indev_t *mouse_indev = lv_indev_drv_register(&indev_drv_1);
-
 
     /*Set a cursor for the mouse*/
     LV_IMG_DECLARE(mouse_cursor_icon)
@@ -48,9 +46,11 @@ int main(void) {
     lv_img_set_src(cursor_obj, &mouse_cursor_icon); /*Set the image source*/
     lv_indev_set_cursor(mouse_indev, cursor_obj); /*Connect the image  object to the driver*/
 
+    /*Create Login Page*/
+    login_page_create();
 
-    /*Create a Demo*/
-    lv_demo_widgets();
+    /*Bind mouse indev to the login page's group*/
+    lv_indev_set_group(mouse_indev, login_page_get_group());
 
     /*Handle LitlevGL tasks (tickless mode)*/
     while (1) {
