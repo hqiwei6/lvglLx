@@ -22,7 +22,6 @@ static lv_obj_t *kb;          /* 软键盘 */
 static lv_obj_t *msg_label;   /* 登录结果提示 */
 static lv_obj_t *user_ta;     /* 账号输入框 */
 static lv_obj_t *pwd_ta;      /* 密码输入框 */
-static lv_group_t *login_group; /* 输入控件组（供实体键盘使用） */
 
 /* 输入框获得/失去焦点时，弹出或隐藏软键盘 */
 static void ta_event_cb(lv_event_t *e)
@@ -168,16 +167,4 @@ void login_page_create(void)
     lv_obj_set_size(kb, 1024, 240);
     lv_obj_align(kb, LV_ALIGN_BOTTOM_MID, 0, 0);
     lv_obj_add_flag(kb, LV_OBJ_FLAG_HIDDEN);
-
-    /* ---------- 输入控件组：绑定到输入设备后，实体键盘可直接输入 ---------- */
-    login_group = lv_group_create();
-    lv_group_add_obj(login_group, user_ta);
-    lv_group_add_obj(login_group, pwd_ta);
-    lv_group_add_obj(login_group, kb);
-    lv_group_add_obj(login_group, btn);
-}
-
-lv_group_t *login_page_get_group(void)
-{
-    return login_group;
 }

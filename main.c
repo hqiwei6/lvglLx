@@ -49,9 +49,6 @@ int main(void) {
     /*Create Login Page*/
     login_page_create();
 
-    /*Bind mouse indev to the login page's group*/
-    lv_indev_set_group(mouse_indev, login_page_get_group());
-
     /*Handle LitlevGL tasks (tickless mode)*/
     while (1) {
         lv_timer_handler();
