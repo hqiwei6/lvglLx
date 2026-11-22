@@ -1,7 +1,14 @@
 #include "lvgl/lvgl.h"
 #include "ui/login.h"
+#include "lv_drv_conf.h"
+
+#if USE_SDL
+#include "lv_drivers/sdl/sdl.h"
+#else
 #include "lv_drivers/display/fbdev.h"
 #include "lv_drivers/indev/evdev.h"
+#endif
+
 #include <unistd.h>
 #include <time.h>
 #include <sys/time.h>
@@ -14,6 +21,32 @@ int main(void) {
     /*LittlevGL init*/
     lv_init();
 
+#if USE_SDL
+    /*SDL2 simulator: create window, tick thread and event handler*/
+    sdl_init();
+
+    static lv_color_t buf[SDL_HOR_RES * SDL_VER_RES];
+
+    /*Initialize a descriptor for the buffer*/
+    static lv_disp_draw_buf_t disp_buf;
+    lv_disp_draw_buf_init(&disp_buf, buf, NULL, SDL_HOR_RES * SDL_VER_RES);
+
+    /*Initialize and register a display driver*/
+    static lv_disp_drv_t disp_drv;
+    lv_disp_drv_init(&disp_drv);
+    disp_drv.draw_buf = &disp_buf;
+    disp_drv.flush_cb = sdl_display_flush;
+    disp_drv.hor_res = SDL_HOR_RES;
+    disp_drv.ver_res = SDL_VER_RES;
+    disp_drv.full_refresh = 1;
+    lv_disp_drv_register(&disp_drv);
+
+    static lv_indev_drv_t indev_drv_1;
+    lv_indev_drv_init(&indev_drv_1); /*Basic initialization*/
+    indev_drv_1.type = LV_INDEV_TYPE_POINTER;
+    indev_drv_1.read_cb = sdl_mouse_read;
+    lv_indev_drv_register(&indev_drv_1);
+#else
     /*Linux frame buffer device init*/
     fbdev_init();
 
@@ -45,6 +78,7 @@ int main(void) {
     lv_obj_t *cursor_obj = lv_img_create(lv_scr_act()); /*Create an image object for the cursor */
     lv_img_set_src(cursor_obj, &mouse_cursor_icon); /*Set the image source*/
     lv_indev_set_cursor(mouse_indev, cursor_obj); /*Connect the image  object to the driver*/
+#endif
 
     /*Create Login Page*/
     login_page_create();
