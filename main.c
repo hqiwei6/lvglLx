@@ -1,5 +1,5 @@
 #include "lvgl/lvgl.h"
-#include "ui/login.h"
+#include "ui/map_view/map_view.h"
 #include "lv_drv_conf.h"
 
 #if USE_SDL
@@ -80,8 +80,8 @@ int main(void) {
     lv_indev_set_cursor(mouse_indev, cursor_obj); /*Connect the image  object to the driver*/
 #endif
 
-    /*Create Login Page*/
-    login_page_create();
+    /*Create Nav Page(单瓦片滑动版; 对象池版见 ui/nav/ 换回 nav_page_create) */
+    map_view_create();
 
     /*Handle LitlevGL tasks (tickless mode)*/
     while (1) {

@@ -14,6 +14,8 @@
 cmake_minimum_required(VERSION 3.12.4)
 project(lvglLx C)
 
+find_package(Threads REQUIRED)   # 瓦片下载线程
+
 option(USE_SDL_SIM "Build with SDL2 simulator instead of framebuffer/evdev (ARM board)" ON)
 
 if(USE_SDL_SIM)
@@ -22,21 +24,28 @@ if(USE_SDL_SIM)
     add_definitions(-DUSE_SDL=1 -DUSE_FBDEV=0 -DUSE_EVDEV=0)
 endif()
 
+# 瓦片目录透传: cmake -B build -DUSE_SDL_SIM=ON -DTILE_BASE_DIR="/tmp/tiles"
+if(TILE_BASE_DIR)
+    string(REPLACE "\"" "" TILE_BASE_DIR "${TILE_BASE_DIR}")   # 剥掉传入值里可能带的引号
+    add_definitions(-DTILE_BASE_DIR="${TILE_BASE_DIR}")        # 统一按带引号字符串传给编译器
+endif()
+
 # lv_conf.h / lv_drv_conf.h 都在项目根目录
 include_directories(${CMAKE_SOURCE_DIR} ${SDL2_INCLUDE_DIRS})
 
 add_subdirectory(lvgl)
 add_subdirectory(lv_drivers)
 
+# 每个页面一个独立文件夹 (ui/<页面名>/)，自动收集（新增文件夹后重新 cmake 即可）
+file(GLOB UI_SOURCES CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/ui/*/*.c)
+
 add_executable(demo
     main.c
     mouse_cursor_icon.c
-    ui/login.c
-    ui/lv_font_cn_16.c
-    ui/lv_font_cn_20.c
+    ${UI_SOURCES}
 )
 
-target_link_libraries(demo PRIVATE lvgl lvgl_drivers m)
+target_link_libraries(demo PRIVATE lvgl lvgl_drivers m Threads::Threads)
 
 if(USE_SDL_SIM)
     target_link_libraries(demo PRIVATE ${SDL2_LIBRARIES})
