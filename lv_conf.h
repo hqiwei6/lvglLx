@@ -46,7 +46,7 @@
  *=========================*/
 
 /*1: use custom malloc/free, 0: use the built-in `lv_mem_alloc()` and `lv_mem_free()`*/
-#define LV_MEM_CUSTOM 1
+#define LV_MEM_CUSTOM 0
 #if LV_MEM_CUSTOM == 0
     /*Size of the memory available for `lv_mem_alloc()` in bytes (>= 2kB)*/
     #define LV_MEM_SIZE (2 * 1024U * 1024U)          /*[bytes]*/
@@ -125,7 +125,7 @@
  *With complex image decoders (e.g. PNG or JPG) caching can save the continuous open/decode of images.
  *However the opened images might consume additional RAM.
  *0: to disable caching*/
-#define LV_IMG_CACHE_DEF_SIZE   16
+#define LV_IMG_CACHE_DEF_SIZE   0
 
 /*Number of stops allowed per gradient. Increase this to allow more stops.
  *This adds (sizeof(lv_color_t) + 1) bytes per additional stop*/
@@ -351,7 +351,7 @@
 #define LV_FONT_MONTSERRAT_12_SUBPX      0
 #define LV_FONT_MONTSERRAT_28_COMPRESSED 0  /*bpp = 3*/
 #define LV_FONT_DEJAVU_16_PERSIAN_HEBREW 0  /*Hebrew, Arabic, Persian letters and all their forms*/
-#define LV_FONT_SIMSUN_16_CJK            0  /*已改用 ui/lv_font_cn_16.c 自定义中文字库*/
+#define LV_FONT_SIMSUN_16_CJK            0  /*1000 most common CJK radicals*/
 
 /*Pixel perfect monospace fonts*/
 #define LV_FONT_UNSCII_8  0
@@ -368,7 +368,7 @@
 /*Enable handling large font and/or fonts with a lot of characters.
  *The limit depends on the font size, font face and bpp.
  *Compiler error will be triggered if a font needs it.*/
-#define LV_FONT_FMT_TXT_LARGE 0
+#define LV_FONT_FMT_TXT_LARGE 1
 
 /*Enables/disables support for compressed fonts.*/
 #define LV_USE_FONT_COMPRESSED 0
@@ -578,9 +578,9 @@
 #endif
 
 /*API for open, read, etc*/
-#define LV_USE_FS_POSIX 1
+#define LV_USE_FS_POSIX 0
 #if LV_USE_FS_POSIX
-    #define LV_FS_POSIX_LETTER 'A'      /*Set an upper cased letter on which the drive will accessible (e.g. 'A')*/
+    #define LV_FS_POSIX_LETTER '\0'     /*Set an upper cased letter on which the drive will accessible (e.g. 'A')*/
     #define LV_FS_POSIX_PATH ""         /*Set the working directory. File/directory paths will be appended to it.*/
     #define LV_FS_POSIX_CACHE_SIZE  0   /*>0 to cache this number of bytes in lv_fs_read()*/
 #endif
@@ -601,7 +601,7 @@
 #endif
 
 /*PNG decoder library*/
-#define LV_USE_PNG 1
+#define LV_USE_PNG 0
 
 /*BMP decoder library*/
 #define LV_USE_BMP 0

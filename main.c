@@ -1,6 +1,10 @@
 #include "lvgl/lvgl.h"
-#include "ui/map_view/map_view.h"
-#include "lv_drv_conf.h"
+#include "lvgl/demos/lv_demos.h"
+#include <unistd.h>
+#include <pthread.h>
+#include <time.h>
+#include <sys/time.h>
+#include "./ui/index/page.h"
 
 #if USE_SDL
 #include "lv_drivers/sdl/sdl.h"
@@ -9,16 +13,9 @@
 #include "lv_drivers/indev/evdev.h"
 #endif
 
-#include <unistd.h>
-#include <time.h>
-#include <sys/time.h>
-
-#define DISP_BUF_SIZE (8*600 * 1024)
-
-uint32_t custom_tick_get(void);
+#define DISP_BUF_SIZE (600*8 * 1024)
 
 int main(void) {
-    /*LittlevGL init*/
     lv_init();
 
 #if USE_SDL
@@ -47,6 +44,9 @@ int main(void) {
     indev_drv_1.read_cb = sdl_mouse_read;
     lv_indev_drv_register(&indev_drv_1);
 #else
+    /*LittlevGL init*/
+    lv_init();
+
     /*Linux frame buffer device init*/
     fbdev_init();
 
@@ -70,8 +70,11 @@ int main(void) {
     static lv_indev_drv_t indev_drv_1;
     lv_indev_drv_init(&indev_drv_1); /*Basic initialization*/
     indev_drv_1.type = LV_INDEV_TYPE_POINTER;
+
+    /*This function will be called periodically (by the library) to get the mouse position and state*/
     indev_drv_1.read_cb = evdev_read;
     lv_indev_t *mouse_indev = lv_indev_drv_register(&indev_drv_1);
+
 
     /*Set a cursor for the mouse*/
     LV_IMG_DECLARE(mouse_cursor_icon)
@@ -80,8 +83,10 @@ int main(void) {
     lv_indev_set_cursor(mouse_indev, cursor_obj); /*Connect the image  object to the driver*/
 #endif
 
-    /*Create Nav Page(单瓦片滑动版; 对象池版见 ui/nav/ 换回 nav_page_create) */
-    map_view_create();
+
+    /*Create a Demo*/
+    // lv_demo_widgets();
+    page_create();
 
     /*Handle LitlevGL tasks (tickless mode)*/
     while (1) {

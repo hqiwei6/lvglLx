@@ -45,7 +45,7 @@ add_executable(demo
     ${UI_SOURCES}
 )
 
-target_link_libraries(demo PRIVATE lvgl lvgl_drivers m Threads::Threads)
+target_link_libraries(demo PRIVATE lvgl lvgl_drivers lvgl_demos m Threads::Threads)
 
 if(USE_SDL_SIM)
     target_link_libraries(demo PRIVATE ${SDL2_LIBRARIES})
