@@ -100,6 +100,37 @@ void lv_textarea_add_char(lv_obj_t * obj, uint32_t c)
 
     lv_textarea_t * ta = (lv_textarea_t *)obj;
 
+    /* 下面的 letter_buf 直接取 c 的内存字节当 UTF-8 序列(期望调用者传
+     * "UTF-8 字节打包的 uint32"); 但 keypad 链 lv_indev→lv_group→LV_EVENT_KEY
+     * 传的是 Unicode 码点, 小端机器上非 ASCII 码点会错位显示
+     * (如 0x5317 '北' 显示成 'S')。此处对非 ASCII 码点先转 UTF-8 打包,
+     * 两种调用者都正确。 */
+    if(c > 0x7F) {
+        char utf8[4];
+        uint8_t n;
+        if(c < 0x800) {
+            utf8[0] = (char)(0xC0 | (c >> 6));
+            utf8[1] = (char)(0x80 | (c & 0x3F));
+            n = 2;
+        }
+        else if(c < 0x10000) {
+            utf8[0] = (char)(0xE0 | (c >> 12));
+            utf8[1] = (char)(0x80 | ((c >> 6) & 0x3F));
+            utf8[2] = (char)(0x80 | (c & 0x3F));
+            n = 3;
+        }
+        else {
+            utf8[0] = (char)(0xF0 | (c >> 18));
+            utf8[1] = (char)(0x80 | ((c >> 12) & 0x3F));
+            utf8[2] = (char)(0x80 | ((c >> 6) & 0x3F));
+            utf8[3] = (char)(0x80 | (c & 0x3F));
+            n = 4;
+        }
+        uint32_t packed = 0;
+        lv_memcpy(&packed, utf8, n);
+        c = packed;
+    }
+
     const char * letter_buf;
 
     uint32_t u32_buf[2];

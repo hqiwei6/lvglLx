@@ -46,6 +46,16 @@ int main(void) {
     indev_drv_1.type = LV_INDEV_TYPE_POINTER;
     indev_drv_1.read_cb = sdl_mouse_read;
     lv_indev_drv_register(&indev_drv_1);
+
+    /* 键盘输入(搜索框输入用): 建 group 并注册 KEYPAD 设备 */
+    lv_group_t *kb_group = lv_group_create();
+    lv_group_set_default(kb_group);
+    static lv_indev_drv_t indev_drv_2;
+    lv_indev_drv_init(&indev_drv_2);
+    indev_drv_2.type = LV_INDEV_TYPE_KEYPAD;
+    indev_drv_2.read_cb = sdl_keyboard_read;
+    lv_indev_t *kb_indev = lv_indev_drv_register(&indev_drv_2);
+    lv_indev_set_group(kb_indev, kb_group);   /* 不绑 group 则 keypad_proc 直接 return, 按键永远到不了控件 */
 #else
     /*Linux frame buffer device init*/
     fbdev_init();

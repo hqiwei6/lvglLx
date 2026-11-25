@@ -7,6 +7,7 @@
  *      INCLUDES
  *********************/
 #include <stddef.h>
+#include <stdio.h>
 
 #include "lv_group.h"
 #include "../misc/lv_gc.h"

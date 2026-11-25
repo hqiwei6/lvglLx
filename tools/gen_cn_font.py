@@ -35,6 +35,15 @@ FONT_CHARS = (
     "电话连接断开在线离线提示警告信息"
 )
 
+# GB2312 一级常用字(区位 16~55 区, 3755 字)——搜索框/目的地名称的任意
+# 中文都能显示, 不用每遇到新字再扩表
+# GB2312 编码: 字节 = 区号 + 0xA0 (区 16 → 0xB0), 位号 + 0xA1
+GB2312_L1 = "".join(
+    bytes([0xA0 + qu, 0xA1 + wei]).decode("gb2312", errors="ignore")
+    for qu in range(16, 56) for wei in range(94)
+)
+FONT_CHARS += GB2312_L1
+
 def pick_font():
     from PIL import ImageFont
     for path in FONT_CANDIDATES:
@@ -56,7 +65,7 @@ def gen_font(px, font_path, font_idx, chars, out_path, var_name):
     font = ImageFont.truetype(font_path, px, index=font_idx)
     ascent, descent = font.getmetrics()
     line_height = ascent + descent
-    base_line = descent
+    base_line = ascent   # LVGL: base_line 是基线距 line_height 顶部的距离(即 ascent)
 
     # ---------- ASCII (32..126) 固定占 gid 1..95 ----------
     ascii_glyphs = []
@@ -182,22 +191,27 @@ def render_glyph(font, ch, px):
     adv = int(round(font.getlength(ch) * 16))  # 8.4 定点
     gb = font.getbbox(ch)                      # 行框坐标 (x0,y0,x1,y1)
     mask = font.getmask(ch, mode="L")
-    mb = mask.getbbox()
-
-    if mb is None:                           # 空白字符(如空格): LVGL 不支持 0x0 字形, 给 1x1 空位图
+    if mask.getbbox() is None or mask.size[0] == 0 or mask.size[1] == 0:
         return dict(adv_w=adv, box_w=1, box_h=1, ofs_x=0, ofs_y=0,
                     data=b"\x00", bitmap_index=0)
 
-    mx0, my0, mx1, my1 = mb
-    w, h = mx1 - mx0, my1 - my0
-    ofs_x = mx0
-    # getmask 返回的位图垂直方向是紧贴墨迹的, 行框内垂直位置要从 getbbox 取
-    ofs_y = gb[1] if (my1 - my0) == (gb[3] - gb[1]) else my0
+    # 关键: getmask 返回的位图是紧贴墨迹的, 原点 = getbbox 左上 (x0,y0)!
+    # (实测 mask.size == getbbox 尺寸; mask.getbbox() 只是墨迹范围,
+    #  底部/边缘抗锯齿不足的行会缺失, 不能拿来二次定位, 否则个别字
+    #  (如 16px "小") 会上下漂移, (如 20px "导") 会左右漂移)
+    w, h = mask.size
+    ofs_x = gb[0]
+    # LVGL 绘制公式(lv_draw_sw_letter.c):
+    #   glyph_top = cursor_y + (line_height - base_line) - box_h - ofs_y
+    # 本脚本 base_line=ascent, 令 glyph_top = cursor_y + gb[1](行框自然位置)
+    # 反解得 ofs_y = descent - box_h - y0 (通常为负, int16 可存)
+    ascent, descent = font.getmetrics()
+    ofs_y = descent - h - gb[1]
 
     bits = bytearray()
     for row in range(h):
         for col in range(w):
-            a = mask.getpixel((mx0 + col, my0 + row))
+            a = mask.getpixel((col, row))     # mask 原点即 bbox 左上, 直接采样
             bits.append(a >> 4)              # 0..15
     data = bytearray()
     for i in range(0, len(bits), 2):         # 连续位流: 高半字节在前, 不按行对齐

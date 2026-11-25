@@ -30,6 +30,20 @@ if(TILE_BASE_DIR)
     add_definitions(-DTILE_BASE_DIR="${TILE_BASE_DIR}")        # 统一按带引号字符串传给编译器
 endif()
 
+# 高德 Web API key 注入: cmake -DAMAP_KEY=xxx / 环境变量 / 项目根 amap_key.txt
+# 首次 -D 传入后存入 CMake 缓存, 之后正常构建自动带上
+if(NOT AMAP_KEY)
+    set(AMAP_KEY "$ENV{AMAP_KEY}")             # 兜底: 也可用环境变量
+endif()
+if(NOT AMAP_KEY AND EXISTS "${CMAKE_SOURCE_DIR}/amap_key.txt")
+    file(READ "${CMAKE_SOURCE_DIR}/amap_key.txt" AMAP_KEY)   # 兜底: 项目内本地文件
+    string(STRIP "${AMAP_KEY}" AMAP_KEY)
+endif()
+if(NOT AMAP_KEY)
+    message(WARNING "未设置 AMAP_KEY, 搜索/路线功能不可用: cmake -DAMAP_KEY=xxx 重新配置")
+endif()
+add_definitions(-DAMAP_KEY="${AMAP_KEY}")
+
 # lv_conf.h / lv_drv_conf.h 都在项目根目录
 include_directories(${CMAKE_SOURCE_DIR} ${SDL2_INCLUDE_DIRS})
 

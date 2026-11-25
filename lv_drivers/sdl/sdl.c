@@ -127,7 +127,10 @@ static char buf[KEYBOARD_BUFFER_SIZE];
 void sdl_init(void)
 {
     /*Initialize the SDL*/
+    SDL_SetHint(SDL_HINT_IME_SHOW_UI, "1");   /* 允许系统输入法(fcitx/ibus)在窗口上弹候选框 */
+    SDL_SetHint(SDL_HINT_RENDER_DRIVER, "software");  /* 软件渲染: 保证窗口后备存储可被 X 工具截图 */
     SDL_Init(SDL_INIT_VIDEO);
+    SDL_StartTextInput();                     /* 开启文本输入模式, 否则不产生 SDL_TEXTINPUT, 输入法不激活 */
 
     SDL_SetEventFilter(quit_filter, NULL);
 
@@ -320,8 +323,24 @@ void sdl_keyboard_read(lv_indev_drv_t * indev_drv, lv_indev_data_t * data)
     else if (len > 0) {
         dummy_read = true;
         data->state = LV_INDEV_STATE_PRESSED;
-        data->key = buf[0];
-        memmove(buf, buf + 1, len);
+        /* UTF-8 → 码点: 输入法提交的中文是多字节序列, 逐字节喂给 textarea 会乱码 */
+        uint8_t c0 = (uint8_t)buf[0];
+        uint32_t cp = c0;
+        size_t seq = 1;
+        if      ((c0 & 0xE0) == 0xC0) { seq = 2; cp = c0 & 0x1F; }
+        else if ((c0 & 0xF0) == 0xE0) { seq = 3; cp = c0 & 0x0F; }
+        else if ((c0 & 0xF8) == 0xF0) { seq = 4; cp = c0 & 0x07; }
+        if (seq > 1 && len >= seq) {
+            bool ok = true;
+            for (size_t i = 1; i < seq; i++) {
+                if (((uint8_t)buf[i] & 0xC0) != 0x80) { ok = false; break; }
+                cp = (cp << 6) | ((uint8_t)buf[i] & 0x3F);
+            }
+            if (!ok) { cp = c0; seq = 1; }
+        }
+        else if (seq > 1) { cp = c0; seq = 1; }   /* 序列不完整, 当单字节处理 */
+        data->key = cp;
+        memmove(buf, buf + seq, len - seq + 1);
         data->continue_reading = true;
     }
 }
@@ -652,3 +671,30 @@ static int tick_thread(void *data)
 #endif
 
 #endif /*USE_MONITOR || USE_SDL*/
+
+/* ---------- 自测/调试辅助(仅 PC 模拟器构建有意义) ---------- */
+#if USE_SDL
+
+/* 导出当前帧为 BMP: SDL 软件渲染下 RenderReadPixels 拿到真实画面,
+ * 绕开外部截图工具(XWD/XGetImage 在合成器/wayland 下拿不到后备存储) */
+void sdl_frame_dump(const char *path)
+{
+    int w, h;
+    if (SDL_QueryTexture(monitor.texture, NULL, NULL, &w, &h) != 0) return;
+    SDL_Surface *s = SDL_CreateRGBSurfaceWithFormat(0, w, h, 32, SDL_PIXELFORMAT_ARGB8888);
+    if (!s) return;
+    SDL_RenderReadPixels(monitor.renderer, NULL, SDL_PIXELFORMAT_ARGB8888,
+                         s->pixels, s->pitch);
+    SDL_SaveBMP(s, path);
+    SDL_FreeSurface(s);
+}
+
+/* 模拟 SDL_TEXTINPUT 提交(utf-8 文本, 走与系统输入法相同的 keypad 输入链) */
+void sdl_inject_text(const char *utf8)
+{
+    size_t len = strlen(buf);
+    if (len < KEYBOARD_BUFFER_SIZE - 1)
+        snprintf(buf + len, KEYBOARD_BUFFER_SIZE - len, "%s", utf8);
+}
+
+#endif /*USE_SDL*/

@@ -166,19 +166,20 @@ static long dechunk(const char *in, long in_len, char **out, bool *done)
     return olen;
 }
 
-/* 下载一张瓦片: 复用/新建长连接, 增量收完整个响应, 校验后落盘 */
-static bool http_get_tile(int z, int x, int y, const char *out_path)
+/* 下载一张瓦片: 复用/新建长连接, 增量收完整个响应, 校验后落盘
+ * layer: 天地图图层类型("vec_w"底图 / "cva_w"中文注记), 两者是独立服务 */
+static bool http_get_tile(int z, int x, int y, const char *layer, const char *out_path)
 {
     int idx = (x + y) % 8;
     char host[64];
     snprintf(host, sizeof(host), "t%d.tianditu.gov.cn", idx);
     char req[512];
     int req_len = snprintf(req, sizeof(req),
-        "GET /DataServer?T=vec_w&x=%d&y=%d&l=%d&tk=%s HTTP/1.1\r\n"
+        "GET /DataServer?T=%s&x=%d&y=%d&l=%d&tk=%s HTTP/1.1\r\n"
         "Host: %s\r\n"
         "User-Agent: PostmanRuntime/7.39.0\r\n"
         "Connection: keep-alive\r\n"
-        "\r\n", x, y, z, TILE_TK, host);
+        "\r\n", layer, x, y, z, TILE_TK, host);
 
     for (int attempt = 0; attempt < 2; attempt++) {
         bool reused = conn_fds[idx] >= 0;
@@ -308,10 +309,14 @@ static void *worker(void *arg)
         }
 
         int z, x, y;
+        /* 文件名前缀决定图层: vec_z_x_y / cva_z_x_y; 旧无前缀文件按底图处理 */
+        const char *layer = "vec_w";
         const char *name = strrchr(path, '/');
         name = name ? name + 1 : path;
+        if (strncmp(name, "cva_", 4) == 0)      { layer = "cva_w"; name += 4; }
+        else if (strncmp(name, "vec_", 4) == 0) { name += 4; }
         if (sscanf(name, "%d_%d_%d", &z, &x, &y) == 3 &&
-            http_get_tile(z, x, y, real_path(path))) {
+            http_get_tile(z, x, y, layer, real_path(path))) {
             consec_fail = 0;
             pthread_mutex_lock(&q_mu);
             g_new++;

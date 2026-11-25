@@ -698,3 +698,11 @@
 #endif /*LV_CONF_H*/
 
 #endif /*End of "Content enable"*/
+
+/* ================= 拼音输入法 (lv_ime_pinyin, 8.3 组件移植) ================= */
+#define LV_USE_IME_PINYIN 1
+#if LV_USE_IME_PINYIN
+    #define LV_IME_PINYIN_USE_DEFAULT_DICT 0   /* 内置词典混繁体/日体, 改用 ui/map_view/pinyin_dict.c 的简体词典 */
+    #define LV_IME_PINYIN_USE_K9_MODE      0   /* 不用 9 键模式 */
+    #define LV_IME_PINYIN_CAND_TEXT_NUM    6   /* 候选词上限(与词典每拼音 6 字一致) */
+#endif
