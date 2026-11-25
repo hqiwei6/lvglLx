@@ -11,6 +11,11 @@
 #define TILE_TK "f44dea7a049dfaa715fc1d9c12cfb904"
 #endif
 
+/* 瓦片缓存根目录(PC 模拟器与板子统一) */
+#ifndef TILE_BASE_DIR
+#define TILE_BASE_DIR "/userdata/tiles"
+#endif
+
 /* 纯网络瓦片加载器: 运行时按需从天地图 DataServer 下载, 落盘缓存 */
 void tile_loader_init(void);                 /* 启动后台下载线程(幂等) */
 bool tile_loader_ready(const char *path);    /* 瓦片缓存文件是否已存在 */

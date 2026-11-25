@@ -20,8 +20,7 @@
  *   - 复用连接失效自动换新重试一次; 连续失败退避 3s
  *   - 响应体校验 PNG 魔数, 是错误 JSON(如 key 配额)则不落盘并打印原因
  */
-#include "tile_loader.h"
-#include "nav_page.h"           /* TILE_BASE_DIR */
+#include "tile_loader.h"               /* TILE_TK / TILE_BASE_DIR */
 
 #include <stdio.h>
 #include <stdlib.h>

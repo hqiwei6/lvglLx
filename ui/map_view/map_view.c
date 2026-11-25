@@ -21,7 +21,7 @@
  */
 #include "map_view.h"
 #include "../nav/tile_loader.h"
-#include "../nav/nav_page.h"     /* TILE_BASE_DIR */
+#include "../nav/tile_loader.h"   /* 瓦片下载线程 + TILE_BASE_DIR 缓存目录 */
 #include "amap.h"
 #include "lvgl/src/extra/others/ime/lv_ime_pinyin.h"   /* 拼音输入法(8.3 组件移植) */
 extern const lv_pinyin_dict_t pinyin_dict_zh[];        /* 简体词典(gen_pinyin_dict.py 生成) */

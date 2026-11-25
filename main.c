@@ -90,7 +90,7 @@ int main(void) {
     lv_indev_set_cursor(mouse_indev, cursor_obj); /*Connect the image  object to the driver*/
 #endif
 
-    /*Create Nav Page(单瓦片滑动版; 对象池版见 ui/nav/ 换回 nav_page_create) */
+    /*Create Map View (瓦片拼接导航页) */
     map_view_create();
 
     /*Handle LitlevGL tasks (tickless mode)*/
